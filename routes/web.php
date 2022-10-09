@@ -18,4 +18,4 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/calculator', [CalculatorController::class, 'index']);
+Route::get('/calculator', [CalculatorController::class, 'index'])->name("calculator");
