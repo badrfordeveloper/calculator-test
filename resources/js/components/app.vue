@@ -34,6 +34,8 @@ export default {
   },
   watch: {
     textOperation(newValue) {
+      //remove spaces
+      this.textOperation = this.textOperation.replace(/\s/g, '');
       this.error = false;
       if (newValue == "") {
         this.reset();
@@ -59,24 +61,28 @@ export default {
         // convert textOperation to an array of chars ['3','2','+','1','2']
         let arrChars = this.textOperation.split("");
         // convert arrChars to an array of items ['32','+','12']
+        console.log(arrChars)
         arrChars.forEach(async (element, index) => {
+          if(element!=" "){
             if (index == arrChars.length - 1) {
-            //if is number
-            if (!isNaN(Number(element))) {
-                myNumber += element;
-                arrItems.push(myNumber);
-                myNumber = "";
+              //if is number
+              if (!isNaN(Number(element))) {
+                  myNumber += element;
+                  arrItems.push(myNumber);
+                  myNumber = "";
+              } else if (["-", "*", "/", "+"].includes(element)) {
+                  arrItems.push(myNumber);
+                  myNumber = "";
+              }
             } else if (["-", "*", "/", "+"].includes(element)) {
                 arrItems.push(myNumber);
                 myNumber = "";
-            }
-            } else if (["-", "*", "/", "+"].includes(element)) {
-            arrItems.push(myNumber);
-            myNumber = "";
-            arrItems.push(element);
+                arrItems.push(element);
             } else {
             myNumber += element;
             }
+
+          }
         });
         //remove empty items
         arrItems = arrItems.filter((n) => n);
@@ -109,11 +115,11 @@ export default {
                 this.result = Number(this.result);
                 // check if element start with
                 if (myNumber != "" && myNumber == "-") this.result -= Number(element);
-                if (myNumber != "" && myNumber == "+") this.result += Number(element);
-                if (myNumber != "" && myNumber == "*") this.result *= Number(element);
-                if (myNumber != "" && myNumber == "/") this.result /= Number(element);
+                else if (myNumber != "" && myNumber == "+") this.result += Number(element);
+                else if (myNumber != "" && myNumber == "*") this.result *= Number(element);
+                else if (myNumber != "" && myNumber == "/") this.result /= Number(element);
             }
-            //+ remove ,00 and toFixed(2) keep only 2 digit behinf the coma
+            //+ remove ,00 and toFixed(2) keep only 2 digit after the coma
             this.result = await +Number(this.result).toFixed(2);
             //if operation go wrong
             if (isNaN(this.result)) {
