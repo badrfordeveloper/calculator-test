@@ -11,18 +11,20 @@
             placeholder="ex : 50-40.2+10"
           ></textarea>
         </div>
-        <h2>result : {{ formatedResult }}</h2>
+        <button class="btn" @click="calculate"> {{ loading ? 'laoding..' : 'calculate'}}</button>
+        <h2 v-show="result">result : {{ formatedResult }}</h2>
       </div>
     </div>
   </div>
 </template>
 
 <script>
+import axios from 'axios'
 export default {
   data() {
     return {
       result: null,
-      startWithMinus: false,
+      loading: false,
       textOperation: "",
       error: false,
     };
@@ -32,100 +34,40 @@ export default {
       return this.result != null && !isNaN(Number(this.result))  ? this.result.toLocaleString("en-US") : "";
     },
   },
-  watch: {
-    textOperation(newValue) {
+  methods: {
+    reset() {
+        this.result = null;
+        this.textOperation = "";
+    },
+    calculate(){
       //remove spaces
       this.textOperation = this.textOperation.replace(/\s/g, '');
       this.error = false;
-      if (newValue == "") {
+      if (this.textOperation == "") {
         this.reset();
       }
-      // check regex that allow operation + integers + floats numbers
-      else if (/^[-+]?[0-9]+(\.\d+(?!\.))?([-+/*](?![-+/*])|([-+/*][0-9]+(\.\d+(?!\.))?))*$/gs.test(newValue) == false) {
+      // check regex that allow operations + integers + floats numbers
+      else if (/^[-+]?[0-9]+(\.\d+(?!\.))?([-+/*](?![-+/*])|([-+/*][0-9]+(\.\d+(?!\.))?))*$/gs.test(this.textOperation) == false) {
         this.error = true;
         this.result = null;
       } else {
         this.makeOperation();
       }
     },
-  },
-  methods: {
-    reset() {
-        this.result = null;
-        this.startWithMinus = false;
-        this.textOperation = "";
-    },
-    makeOperation() {
-        let arrItems = [];
-        let myNumber = "";
-        // convert textOperation to an array of chars ['3','2','+','1','2']
-        let arrChars = this.textOperation.split("");
-        // convert arrChars to an array of items ['32','+','12']
-        console.log(arrChars)
-        arrChars.forEach(async (element, index) => {
-          if(element!=" "){
-            if (index == arrChars.length - 1) {
-              //if is number
-              if (!isNaN(Number(element))) {
-                  myNumber += element;
-                  arrItems.push(myNumber);
-                  myNumber = "";
-              } else if (["-", "*", "/", "+"].includes(element)) {
-                  arrItems.push(myNumber);
-                  myNumber = "";
-              }
-            } else if (["-", "*", "/", "+"].includes(element)) {
-                arrItems.push(myNumber);
-                myNumber = "";
-                arrItems.push(element);
-            } else {
-            myNumber += element;
-            }
-
-          }
-        });
-        //remove empty items
-        arrItems = arrItems.filter((n) => n);
-        myNumber = "";
-        this.result = null;
-        //start the calculation
-        arrItems.forEach(async (element, index) => {
-            //deal with first element if he is - or not
-            if (index == 0) {
-                if (element == "-") {
-                    this.startWithMinus = true;
-                } else if (["*", "/", "+"].includes(element)) {
-                    this.startWithMinus = false;
-                } else {
-                    this.startWithMinus = false;
-                    this.result = element;
-                }
-            }
-            //first number
-            else if (this.result == null) {
-                this.result = this.startWithMinus ? -1 * element : element;
-            }
-            //catch an operation
-            else if (["-", "*", "/", "+"].includes(element)) {
-                myNumber = element;
-            }
-            //make the calculation
-            //Number : convert string to an number
-             else {
-                this.result = Number(this.result);
-                // check if element start with
-                if (myNumber != "" && myNumber == "-") this.result -= Number(element);
-                else if (myNumber != "" && myNumber == "+") this.result += Number(element);
-                else if (myNumber != "" && myNumber == "*") this.result *= Number(element);
-                else if (myNumber != "" && myNumber == "/") this.result /= Number(element);
-            }
-            //+ remove ,00 and toFixed(2) keep only 2 digit after the coma
-            this.result = await +Number(this.result).toFixed(2);
-            //if operation go wrong
-            if (isNaN(this.result)) {
+    async  makeOperation() {
+        this.loading=true;
+        await axios.post('/calculate', {
+            textOperation: this.textOperation,
+        })
+        .then( (response) => {
+            this.error = false;
+            this.result = response.data;
+            this.loading=false;
+        })
+        .catch( (erreur) => {
+                this.loading=false;
                 this.error = true;
                 this.result = null;
-            }
         });
     },
   },
@@ -133,6 +75,16 @@ export default {
 </script>
 
 <style >
+.btn{
+    width: 141px;
+    margin: auto;
+    color: white;
+    display: block;
+    background-color: #002048;
+    padding: 11px;
+    margin-bottom: 13px;
+    font-size: 16px;
+}
 html {
   height: 100%;
 }

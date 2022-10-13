@@ -19,3 +19,4 @@ Route::get('/', function () {
 });
 
 Route::get('/calculator', [CalculatorController::class, 'index'])->name("calculator");
+Route::post('/calculate', [CalculatorController::class, 'calculate'])->name("calculate");
